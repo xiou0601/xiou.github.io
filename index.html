@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Word Flip 單字翻翻樂</title>
+<style>
+  :root{
+    --bg:#f6f6f4; --surface:#ffffff; --text:#1d1d1f; --muted:#6e6e73; --line:#e4e4e7;
+    --accent:#3b5bdb; --accent-ink:#ffffff;
+    --en:#e8eefc; --en-ink:#2f4bb8;
+    --zh:#fdf0e1; --zh-ink:#b45f0c;
+    --heart:#e5484d; --ok:#2f9e6b;
+    --radius:14px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#121214; --surface:#1c1c1f; --text:#f2f2f4; --muted:#9a9aa1; --line:#2c2c31;
+      --accent:#7b93ff; --accent-ink:#0e1020;
+      --en:#1d2742; --en-ink:#a9bcff;
+      --zh:#3a2a17; --zh-ink:#ffc184;
+    }
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
+    background:var(--bg); color:var(--text); min-height:100vh; line-height:1.5;
+  }
+  .hidden{display:none !important}
+  .wrap{max-width:760px;margin:0 auto;padding:28px 16px 40px}
+
+  /* ---------- 首頁 ---------- */
+  .home h1{font-size:clamp(30px,6vw,44px);letter-spacing:-.02em;font-weight:700}
+  .home h1 span{color:var(--accent)}
+  .home .sub{color:var(--muted);margin-top:6px}
+  .section-label{font-size:13px;color:var(--muted);margin:32px 0 12px;letter-spacing:.06em}
+  .themes{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+  .theme-btn{
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:20px 18px;text-align:left;cursor:pointer;color:var(--text);font:inherit;
+    transition:transform .15s,border-color .15s,box-shadow .15s;
+  }
+  .theme-btn:hover{transform:translateY(-2px);border-color:var(--accent);box-shadow:0 6px 18px rgba(0,0,0,.06)}
+  .theme-btn .ico{font-size:28px}
+  .theme-btn .name{display:block;font-size:18px;font-weight:600;margin-top:8px}
+  .theme-btn .count{font-size:13px;color:var(--muted)}
+  .rules{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 20px}
+  .rules li{margin-left:18px;color:var(--muted);font-size:14px;padding:2px 0}
+  .rules b{color:var(--text);font-weight:600}
+
+  /* ---------- 遊戲畫面 ---------- */
+  .hud{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+  .hud .lvl{font-weight:600;font-size:17px}
+  .hud .lvl small{color:var(--muted);font-weight:400;font-size:14px;margin-left:6px}
+  .hud .right{display:flex;align-items:center;gap:16px}
+  .hearts{font-size:20px;letter-spacing:2px;color:var(--heart)}
+  .hearts .empty{color:var(--line)}
+  .steps{font-size:14px;color:var(--muted)}
+  .link-btn{background:none;border:none;color:var(--muted);font:inherit;font-size:14px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+  .progress{height:4px;background:var(--line);border-radius:4px;overflow:hidden;margin-bottom:14px}
+  .progress div{height:100%;width:0;background:var(--accent);transition:width .4s}
+  .msg{text-align:center;color:var(--muted);font-size:15px;min-height:24px;margin-bottom:14px}
+  .msg.good{color:var(--ok)} .msg.bad{color:var(--heart)}
+
+  .board{display:grid;grid-template-columns:repeat(var(--cols,4),1fr);gap:10px}
+  @media (max-width:540px){ .board{grid-template-columns:repeat(4,1fr);gap:8px} }
+
+  .card{
+    position:relative;aspect-ratio:5/4;border-radius:12px;border:2px solid transparent;padding:6px;
+    display:flex;align-items:center;justify-content:center;text-align:center;
+    cursor:pointer;font:inherit;transition:opacity .35s,transform .2s,border-color .15s,box-shadow .15s;
+  }
+  .card.en{background:var(--en);color:var(--en-ink)}
+  .card.zh{background:var(--zh);color:var(--zh-ink)}
+  .card:hover{transform:translateY(-2px)}
+  .card.en:hover{border-color:color-mix(in srgb,var(--en-ink) 35%,transparent)}
+  .card.zh:hover{border-color:color-mix(in srgb,var(--zh-ink) 35%,transparent)}
+  .card.selected{transform:translateY(-3px)}
+  .card.en.selected{border-color:var(--en-ink);box-shadow:0 6px 16px color-mix(in srgb,var(--en-ink) 25%,transparent)}
+  .card.zh.selected{border-color:var(--zh-ink);box-shadow:0 6px 16px color-mix(in srgb,var(--zh-ink) 25%,transparent)}
+  .card .tag{position:absolute;top:6px;left:8px;font-size:10px;font-weight:700;opacity:.6;letter-spacing:.05em}
+  .card .word{font-size:clamp(12px,2.6vw,17px);font-weight:600;overflow-wrap:anywhere;line-height:1.25}
+  .card.wrong{border-color:var(--heart) !important}
+  .card.matched{animation:pop .45s ease}
+  .card.wrong{animation:shake .4s ease}
+  .card.gone{opacity:0;transform:scale(.85);pointer-events:none}
+  @keyframes pop{50%{transform:scale(1.08)}}
+  @keyframes shake{20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
+
+  /* ---------- 彈窗 ---------- */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;padding:16px;z-index:10;animation:fade .2s}
+  .modal{background:var(--surface);border-radius:18px;max-width:440px;width:100%;max-height:88vh;overflow:auto;padding:26px 22px;box-shadow:0 20px 50px rgba(0,0,0,.2);animation:rise .25s ease}
+  .modal h2{font-size:22px;margin-bottom:6px}
+  .modal p.note{color:var(--muted);font-size:14px}
+  .stats{display:flex;gap:10px;margin:16px 0}
+  .stat{flex:1;background:var(--bg);border-radius:12px;padding:10px 12px}
+  .stat .k{font-size:12px;color:var(--muted)} .stat .v{font-size:20px;font-weight:700}
+  .wordlist{width:100%;border-collapse:collapse;margin:6px 0 18px;font-size:15px}
+  .wordlist td{padding:8px 4px;border-bottom:1px solid var(--line)}
+  .wordlist td.en{color:var(--en-ink);font-weight:600}
+  .wordlist td.zh{color:var(--zh-ink);text-align:right}
+  .actions{display:flex;gap:10px;flex-wrap:wrap}
+  .btn{flex:1;min-width:120px;border:none;border-radius:12px;padding:12px 16px;font:inherit;font-weight:600;cursor:pointer;background:var(--accent);color:var(--accent-ink)}
+  .btn.ghost{background:var(--bg);color:var(--text);border:1px solid var(--line)}
+  .btn:hover{filter:brightness(1.05)}
+  @keyframes fade{from{opacity:0}}
+  @keyframes rise{from{transform:translateY(12px);opacity:0}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- 首頁 -->
+  <section id="home" class="home">
+    <h1>Word <span>Flip</span></h1>
+    <p class="sub">單字翻翻樂｜翻開英文和中文，找出同一組單字</p>
+
+    <p class="section-label">選擇主題</p>
+    <div class="themes" id="themes"></div>
+
+    <p class="section-label">遊戲規則</p>
+    <ul class="rules">
+      <li>共 <b>5 關</b>，牌會越來越多（4 → 12 組）</li>
+      <li>所有卡片都是打開的：<b>藍色是英文</b>、<b>橘色是中文</b></li>
+      <li>點一張英文、再點一張中文，意思相同就消除</li>
+      <li>配錯扣一顆心，每關有 <b>5 顆心</b>，扣完就要重玩這關</li>
+      <li>過關會列出這關的單字表，方便複習</li>
+    </ul>
+  </section>
+
+  <!-- 遊戲 -->
+  <section id="game" class="hidden">
+    <div class="hud">
+      <div class="lvl" id="lvl"></div>
+      <div class="right">
+        <span class="steps" id="steps"></span>
+        <span class="hearts" id="hearts"></span>
+        <button class="link-btn" id="homeBtn">回主選單</button>
+      </div>
+    </div>
+    <div class="progress"><div id="bar"></div></div>
+    <p class="msg" id="msg"></p>
+    <div class="board" id="board"></div>
+  </section>
+</div>
+
+<div class="overlay hidden" id="overlay"><div class="modal" id="modal"></div></div>
+
+<script>
+const THEMES = {
+  geo: { name:'地科', icon:'⛰️', words:[
+    ['magma','岩漿'],['fault','斷層'],['sediment','沉積物'],['mineral','礦物'],['fossil','化石'],
+    ['volcano','火山'],['earthquake','地震'],['erosion','侵蝕'],['glacier','冰河'],['crust','地殼'],
+    ['mantle','地函'],['plate','板塊'],['granite','花崗岩'],['basalt','玄武岩'],['aquifer','含水層'] ]},
+  food: { name:'食物', icon:'🍎', words:[
+    ['apple','蘋果'],['banana','香蕉'],['bread','麵包'],['rice','米飯'],['noodle','麵'],
+    ['cheese','起司'],['egg','蛋'],['milk','牛奶'],['tea','茶'],['soup','湯'],
+    ['grape','葡萄'],['carrot','紅蘿蔔'],['cookie','餅乾'],['juice','果汁'] ]},
+  animal: { name:'動物', icon:'🐘', words:[
+    ['elephant','大象'],['rabbit','兔子'],['tiger','老虎'],['dolphin','海豚'],['penguin','企鵝'],
+    ['giraffe','長頸鹿'],['turtle','烏龜'],['eagle','老鷹'],['monkey','猴子'],['whale','鯨魚'],
+    ['squirrel','松鼠'],['frog','青蛙'],['owl','貓頭鷹'],['zebra','斑馬'] ]},
+  daily: { name:'日常生活', icon:'☂️', words:[
+    ['umbrella','雨傘'],['library','圖書館'],['chair','椅子'],['bicycle','腳踏車'],['window','窗戶'],
+    ['kitchen','廚房'],['pillow','枕頭'],['wallet','錢包'],['ticket','車票'],['notebook','筆記本'],
+    ['mirror','鏡子'],['clock','時鐘'],['key','鑰匙'],['station','車站'] ]}
+};
+const LEVELS = [4, 6, 8, 10, 12];   // 每關幾組
+const MAX_HEARTS = 5;
+
+const $ = id => document.getElementById(id);
+const board = $('board'), overlay = $('overlay'), modal = $('modal');
+
+const state = { theme:null, level:0, hearts:MAX_HEARTS, steps:0, first:null, lock:true,
+                words:[], matched:[], totalSteps:0, learned:new Map(), round:0, timer:null };
+
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+/* ---------- 首頁 ---------- */
+Object.entries(THEMES).forEach(([key,t])=>{
+  const b = document.createElement('button');
+  b.className = 'theme-btn';
+  b.innerHTML = `<span class="ico">${t.icon}</span><span class="name">${t.name}</span><span class="count">${t.words.length} 個單字</span>`;
+  b.onclick = () => startGame(key);
+  $('themes').appendChild(b);
+});
+
+function showHome(){
+  state.round++; clearInterval(state.timer);
+  closeModal();
+  $('game').classList.add('hidden'); $('home').classList.remove('hidden');
+}
+$('homeBtn').onclick = showHome;
+
+/* ---------- 遊戲流程 ---------- */
+function startGame(key){
+  state.theme = key; state.level = 0; state.totalSteps = 0; state.learned = new Map();
+  $('home').classList.add('hidden'); $('game').classList.remove('hidden');
+  startLevel();
+}
+
+function startLevel(){
+  closeModal();
+  state.round++; clearInterval(state.timer);
+  const n = LEVELS[state.level];
+  Object.assign(state, { hearts:MAX_HEARTS, steps:0, first:null, lock:true, matched:[] });
+  state.words = shuffle([...THEMES[state.theme].words]).slice(0, n);
+
+  const cards = [];
+  state.words.forEach((w,i)=>{
+    cards.push({ id:i, type:'en', text:w[0] });
+    cards.push({ id:i, type:'zh', text:w[1] });
+  });
+  shuffle(cards);
+
+  const total = cards.length;
+  board.style.setProperty('--cols', total <= 16 ? 4 : total === 20 ? 5 : 6);
+  board.innerHTML = '';
+  cards.forEach(c=>{
+    const el = document.createElement('button');
+    el.className = `card ${c.type}`;
+    el.dataset.id = c.id;
+    el.dataset.type = c.type;
+    el.innerHTML = `<span class="tag">${c.type==='en'?'EN':'中'}</span><span class="word">${c.text}</span>`;
+    el.onclick = () => pick(el);
+    board.appendChild(el);
+  });
+  updateHud();
+  setMsg('點一張英文，再點一張中文來配對');
+  state.lock = false;
+}
+
+function pick(el){
+  if (state.lock || el.classList.contains('gone')) return;
+  const sel = state.first;
+
+  // 還沒選、或點到同一張 → 選取／取消
+  if (!sel){ el.classList.add('selected'); state.first = el; return; }
+  if (sel === el){ el.classList.remove('selected'); state.first = null; return; }
+
+  // 點到同一種語言 → 直接換選這張，不扣心
+  if (sel.dataset.type === el.dataset.type){
+    sel.classList.remove('selected'); el.classList.add('selected'); state.first = el; return;
+  }
+
+  const a = sel, b = el, r = state.round;
+  b.classList.add('selected');
+  state.first = null; state.lock = true; state.steps++;
+  updateHud();
+
+  if (a.dataset.id === b.dataset.id){
+    const w = state.words[+a.dataset.id];
+    a.classList.add('matched'); b.classList.add('matched');
+    state.matched.push(w);
+    setMsg(`✓ ${w[0]} ＝ ${w[1]}`, 'good');
+    updateHud();
+    setTimeout(()=>{
+      if (r !== state.round) return;
+      a.classList.add('gone'); b.classList.add('gone');
+      if (state.matched.length === state.words.length) setTimeout(levelClear, 350);
+      else state.lock = false;
+    }, 450);
+  } else {
+    a.classList.add('wrong'); b.classList.add('wrong');
+    state.hearts--; updateHud();
+    setMsg(state.hearts > 0 ? '配錯了，扣一顆心' : '生命用完了…', 'bad');
+    setTimeout(()=>{
+      if (r !== state.round) return;
+      a.classList.remove('wrong','selected'); b.classList.remove('wrong','selected');
+      if (state.hearts <= 0) setTimeout(levelFail, 300);
+      else state.lock = false;
+    }, 600);
+  }
+}
+
+/* ---------- 畫面更新 ---------- */
+function updateHud(){
+  $('lvl').innerHTML = `第 ${state.level+1} / ${LEVELS.length} 關<small>${THEMES[state.theme].name}</small>`;
+  $('hearts').innerHTML = Array.from({length:MAX_HEARTS},(_,i)=> i < state.hearts ? '♥' : '<span class="empty">♥</span>').join('');
+  $('steps').textContent = `步數 ${state.steps}`;
+  $('bar').style.width = (state.matched.length / state.words.length * 100) + '%';
+}
+function setMsg(text, cls=''){ const m=$('msg'); m.textContent=text; m.className='msg '+cls; }
+
+function wordTable(list){
+  return `<table class="wordlist">${list.map(w=>`<tr><td class="en">${w[0]}</td><td class="zh">${w[1]}</td></tr>`).join('')}</table>`;
+}
+function openModal(html){ modal.innerHTML = html; overlay.classList.remove('hidden'); modal.scrollTop = 0; }
+function closeModal(){ overlay.classList.add('hidden'); }
+
+function levelClear(){
+  state.totalSteps += state.steps;
+  state.matched.forEach(w => state.learned.set(w[0], w));
+  const last = state.level === LEVELS.length - 1;
+  openModal(`
+    <h2>第 ${state.level+1} 關過關！</h2>
+    <p class="note">複習一下這關的單字</p>
+    <div class="stats">
+      <div class="stat"><div class="k">剩餘生命</div><div class="v" style="color:var(--heart)">${'♥'.repeat(state.hearts)}</div></div>
+      <div class="stat"><div class="k">步數</div><div class="v">${state.steps}</div></div>
+    </div>
+    ${wordTable(state.matched)}
+    <div class="actions"><button class="btn" id="nextBtn">${last ? '看通關結果' : '下一關 →'}</button></div>`);
+  $('nextBtn').onclick = () => {
+    if (last) allClear();
+    else { state.level++; startLevel(); }
+  };
+}
+
+function levelFail(){
+  openModal(`
+    <h2>生命用完了</h2>
+    <p class="note">這關已配對 ${state.matched.length} / ${state.words.length} 組，再試一次吧！</p>
+    <div class="stats">
+      <div class="stat"><div class="k">關卡</div><div class="v">${state.level+1}</div></div>
+      <div class="stat"><div class="k">步數</div><div class="v">${state.steps}</div></div>
+    </div>
+    <div class="actions">
+      <button class="btn" id="retryBtn">重玩這關</button>
+      <button class="btn ghost" id="menuBtn">回主選單</button>
+    </div>`);
+  $('retryBtn').onclick = startLevel;
+  $('menuBtn').onclick = showHome;
+}
+
+function allClear(){
+  const list = [...state.learned.values()];
+  openModal(`
+    <h2>🎉 全部通關！</h2>
+    <p class="note">主題：${THEMES[state.theme].name}</p>
+    <div class="stats">
+      <div class="stat"><div class="k">總步數</div><div class="v">${state.totalSteps}</div></div>
+      <div class="stat"><div class="k">學到的單字</div><div class="v">${list.length}</div></div>
+    </div>
+    ${wordTable(list)}
+    <div class="actions">
+      <button class="btn" id="againBtn">再玩一次</button>
+      <button class="btn ghost" id="menuBtn">換主題</button>
+    </div>`);
+  $('againBtn').onclick = () => startGame(state.theme);
+  $('menuBtn').onclick = showHome;
+}
+</script>
+</body>
+</html>
