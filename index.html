@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Word Flip 單字翻翻樂</title>
+<title>Word Match 單字配對樂</title>
 <style>
   :root{
     --bg:#f6f6f4; --surface:#ffffff; --text:#1d1d1f; --muted:#6e6e73; --line:#e4e4e7;
@@ -112,8 +112,8 @@
 
   <!-- 首頁 -->
   <section id="home" class="home">
-    <h1>Word <span>Flip</span></h1>
-    <p class="sub">單字翻翻樂｜翻開英文和中文，找出同一組單字</p>
+    <h1>Word <span>Match</span></h1>
+    <p class="sub">單字配對樂｜把英文和中文配成對，邊玩邊背單字</p>
 
     <p class="section-label">選擇主題</p>
     <div class="themes" id="themes"></div>
@@ -149,21 +149,37 @@
 <script>
 const THEMES = {
   geo: { name:'地科', icon:'⛰️', words:[
-    ['magma','岩漿'],['fault','斷層'],['sediment','沉積物'],['mineral','礦物'],['fossil','化石'],
-    ['volcano','火山'],['earthquake','地震'],['erosion','侵蝕'],['glacier','冰河'],['crust','地殼'],
-    ['mantle','地函'],['plate','板塊'],['granite','花崗岩'],['basalt','玄武岩'],['aquifer','含水層'] ]},
+    ['magma','岩漿'],['lava','熔岩'],['fault','斷層'],['fold','褶皺'],['sediment','沉積物'],
+    ['mineral','礦物'],['fossil','化石'],['volcano','火山'],['earthquake','地震'],['erosion','侵蝕'],
+    ['weathering','風化'],['glacier','冰河'],['crust','地殼'],['mantle','地函'],['core','地核'],
+    ['plate','板塊'],['granite','花崗岩'],['basalt','玄武岩'],['limestone','石灰岩'],['sandstone','砂岩'],
+    ['shale','頁岩'],['marble','大理岩'],['quartz','石英'],['aquifer','含水層'],['groundwater','地下水'],
+    ['tsunami','海嘯'],['landslide','山崩'],['epicenter','震央'],['stratum','地層'],['delta','三角洲'],
+    ['typhoon','颱風'],['atmosphere','大氣'] ]},
   food: { name:'食物', icon:'🍎', words:[
     ['apple','蘋果'],['banana','香蕉'],['bread','麵包'],['rice','米飯'],['noodle','麵'],
     ['cheese','起司'],['egg','蛋'],['milk','牛奶'],['tea','茶'],['soup','湯'],
-    ['grape','葡萄'],['carrot','紅蘿蔔'],['cookie','餅乾'],['juice','果汁'] ]},
+    ['grape','葡萄'],['carrot','紅蘿蔔'],['cookie','餅乾'],['juice','果汁'],['strawberry','草莓'],
+    ['watermelon','西瓜'],['pineapple','鳳梨'],['mango','芒果'],['lemon','檸檬'],['tomato','番茄'],
+    ['potato','馬鈴薯'],['onion','洋蔥'],['garlic','大蒜'],['cabbage','高麗菜'],['chicken','雞肉'],
+    ['beef','牛肉'],['pork','豬肉'],['shrimp','蝦子'],['tofu','豆腐'],['dumpling','水餃'],
+    ['butter','奶油'],['honey','蜂蜜'],['sugar','糖'],['salt','鹽'],['coffee','咖啡'] ]},
   animal: { name:'動物', icon:'🐘', words:[
     ['elephant','大象'],['rabbit','兔子'],['tiger','老虎'],['dolphin','海豚'],['penguin','企鵝'],
     ['giraffe','長頸鹿'],['turtle','烏龜'],['eagle','老鷹'],['monkey','猴子'],['whale','鯨魚'],
-    ['squirrel','松鼠'],['frog','青蛙'],['owl','貓頭鷹'],['zebra','斑馬'] ]},
+    ['squirrel','松鼠'],['frog','青蛙'],['owl','貓頭鷹'],['zebra','斑馬'],['lion','獅子'],
+    ['bear','熊'],['wolf','狼'],['fox','狐狸'],['deer','鹿'],['horse','馬'],
+    ['sheep','綿羊'],['goat','山羊'],['pig','豬'],['duck','鴨子'],['kangaroo','袋鼠'],
+    ['koala','無尾熊'],['camel','駱駝'],['crocodile','鱷魚'],['octopus','章魚'],['shark','鯊魚'],
+    ['butterfly','蝴蝶'],['bee','蜜蜂'],['snake','蛇'],['mouse','老鼠'],['hippo','河馬'] ]},
   daily: { name:'日常生活', icon:'☂️', words:[
     ['umbrella','雨傘'],['library','圖書館'],['chair','椅子'],['bicycle','腳踏車'],['window','窗戶'],
     ['kitchen','廚房'],['pillow','枕頭'],['wallet','錢包'],['ticket','車票'],['notebook','筆記本'],
-    ['mirror','鏡子'],['clock','時鐘'],['key','鑰匙'],['station','車站'] ]}
+    ['mirror','鏡子'],['clock','時鐘'],['key','鑰匙'],['station','車站'],['table','桌子'],
+    ['bed','床'],['door','門'],['lamp','檯燈'],['towel','毛巾'],['toothbrush','牙刷'],
+    ['backpack','背包'],['pencil','鉛筆'],['eraser','橡皮擦'],['scissors','剪刀'],['calendar','月曆'],
+    ['hospital','醫院'],['supermarket','超市'],['airport','機場'],['bus','公車'],['elevator','電梯'],
+    ['refrigerator','冰箱'],['telephone','電話'],['shoes','鞋子'],['glasses','眼鏡'],['homework','作業'] ]}
 };
 const LEVELS = [4, 6, 8, 10, 12];   // 每關幾組
 const MAX_HEARTS = 5;
